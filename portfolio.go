@@ -128,3 +128,19 @@ func Recombine(p0, p1 Portfolio) Portfolio {
 	}
 	return ret
 }
+
+func randomPortfolio(names []string) Portfolio {
+	var p Portfolio
+	for _, name := range names {
+		p.Positions = append(p.Positions, Position{
+			Name: name,
+		})
+	}
+
+	for i := 0; i < 100; i++ {
+		idx := rand.Intn(len(p.Positions))
+		p.Positions[idx].Value += 1000
+	}
+
+	return p
+}
