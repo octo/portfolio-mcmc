@@ -24,11 +24,17 @@ func main() {
 		log.Fatal(err)
 	}
 
+	//
+	// Optimize asset allocation
+	//
 	if err := evolve(hist); err != nil {
 		log.Fatal("evolve: ", err)
 	}
 	return
 
+	//
+	// Backtest specific portfolio
+	//
 	p := Portfolio{
 		Positions: []Position{
 			{"WORLD VALUE", 40000.0},
@@ -49,6 +55,9 @@ func main() {
 	fmt.Printf("data %q (returns: %.1f%%; volatility: %.1f%%; sharpe ratio: %.2f)\n",
 		res, res.Returns(), res.Volatility(), res.SharpeRatio())
 
+	//
+	// Forecast specific portfolio using Monte Carlo Markov Chains
+	//
 	fmt.Println("=== Markov Chains ===")
 	var results []IndexHistory
 	for i := 0; i < 50; i++ {
