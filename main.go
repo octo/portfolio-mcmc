@@ -23,15 +23,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	delete(hist, "WORLD MOMENTUM")
-
-	for name, h := range hist {
-		returns := h.Returns()
-		volatility := h.Volatility()
-
-		fmt.Printf("data %q (returns: %.1f%%; volatility: %.1f%%; sharpe ratio: %.2f)\n",
-			name, returns, volatility, returns/volatility)
-	}
 
 	if err := evolve(hist); err != nil {
 		log.Fatal("evolve: ", err)
@@ -46,7 +37,6 @@ func main() {
 			{"WORLD MOMENTUM", 0},
 		},
 	}
-	// p := randomPortfolio()
 
 	res, err := p.Eval(&Backtest{
 		Data: hist,
@@ -144,8 +134,8 @@ func evolve(hist map[string]IndexHistory) error {
 
 		sort.Sort(pop)
 
-		// fmt.Println(pop.Individuals[len(pop.Individuals)-1])
-		fmt.Println(pop.Individuals[len(pop.Individuals)-1].Portfolio.CSV())
+		fmt.Println(pop.Individuals[len(pop.Individuals)-1])
+		// fmt.Println(pop.Individuals[len(pop.Individuals)-1].Portfolio.CSV())
 
 		// replace the worse half of the population.
 		num := len(pop.Individuals) / 2
