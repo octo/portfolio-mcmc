@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/octo/portfolio-mcmc/timeseries"
 )
 
 func main() {
@@ -19,7 +21,7 @@ func main() {
 	}
 	defer f.Close()
 
-	hist, err := loadHistory(f)
+	hist, err := timeseries.Load(f)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +61,7 @@ func main() {
 	// Forecast specific portfolio using Monte Carlo Markov Chains
 	//
 	fmt.Println("=== Markov Chains ===")
-	var results []IndexHistory
+	var results []timeseries.Data
 	for i := 0; i < 50; i++ {
 		res, err := p.Eval(&MarkovChain{
 			Data: hist,
@@ -71,7 +73,7 @@ func main() {
 		results = append(results, res)
 	}
 
-	sort.Sort(BySharpeRatio(results))
+	sort.Sort(timeseries.BySharpeRatio(results))
 	for _, res := range results {
 		fmt.Printf("data %q (returns: %.1f%%; volatility: %.1f%%; sharpe ratio: %.2f)\n",
 			res, res.Returns(), res.Volatility(), res.SharpeRatio())
@@ -105,7 +107,7 @@ func (p *Population) Swap(i, j int) {
 	p.Individuals[i], p.Individuals[j] = p.Individuals[j], p.Individuals[i]
 }
 
-func evolve(hist map[string]IndexHistory) error {
+func evolve(hist map[string]timeseries.Data) error {
 	var names []string
 	for name := range hist {
 		names = append(names, name)
@@ -121,11 +123,11 @@ func evolve(hist map[string]IndexHistory) error {
 	}
 
 	for k := 0; k < 2000; k++ {
-		genHist, err := generateHistory(names, &MarkovChain{
+		genHist, err := timeseries.Generate(names, &MarkovChain{
 			Data: hist,
 		})
 		if err != nil {
-			return fmt.Errorf("generateHistory: %w", err)
+			return fmt.Errorf("timeseries.Generate: %w", err)
 		}
 
 		for _, ind := range pop.Individuals {

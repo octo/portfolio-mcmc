@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/octo/portfolio-mcmc/timeseries"
 )
 
 type Portfolio struct {
@@ -53,11 +55,11 @@ func (p Portfolio) CSV() string {
 	return strings.Join(fields, ",")
 }
 
-func (p Portfolio) Eval(qp QuoteProvider) (IndexHistory, error) {
+func (p Portfolio) Eval(qp QuoteProvider) (timeseries.Data, error) {
 	positions := make([]Position, len(p.Positions))
 	copy(positions, p.Positions)
 
-	ret := IndexHistory{
+	ret := timeseries.Data{
 		Name: "Simulated Portfolio",
 	}
 
@@ -71,7 +73,7 @@ func (p Portfolio) Eval(qp QuoteProvider) (IndexHistory, error) {
 		for i := 0; i < len(positions); i++ {
 			rv, err := qp.RelativeValue(positions[i].Name)
 			if err != nil {
-				return IndexHistory{}, err
+				return timeseries.Data{}, err
 			}
 
 			positions[i].Value *= rv
@@ -79,7 +81,7 @@ func (p Portfolio) Eval(qp QuoteProvider) (IndexHistory, error) {
 			// fmt.Printf("[%v] %q %.0f (%5.1f%%)\n", date, positions[i].Name, positions[i].Value, 100*(rv-1))
 		}
 
-		ret.Data = append(ret.Data, IndexDatum{
+		ret.Data = append(ret.Data, timeseries.Datum{
 			Date:  date,
 			Value: sum,
 		})

@@ -1,4 +1,4 @@
-package main
+package timeseries
 
 import (
 	"encoding/csv"
@@ -9,21 +9,24 @@ import (
 	"time"
 )
 
-type IndexDatum struct {
+// TODO: create a new type for map[string]Data.
+
+type Datum struct {
 	Date  time.Time
 	Value float64
 }
 
-type IndexHistory struct {
+// Data holds timeseries data.
+type Data struct {
 	Name string
-	Data []IndexDatum
+	Data []Datum
 }
 
-func (h IndexHistory) String() string {
+func (h Data) String() string {
 	return h.Name
 }
 
-func (h IndexHistory) Average() float64 {
+func (h Data) Average() float64 {
 	var ret float64
 
 	for _, d := range h.Data {
@@ -33,7 +36,7 @@ func (h IndexHistory) Average() float64 {
 	return ret / float64(len(h.Data))
 }
 
-func (h IndexHistory) Variance() float64 {
+func (h Data) Variance() float64 {
 	var ret float64
 	avg := h.Average()
 
@@ -45,11 +48,11 @@ func (h IndexHistory) Variance() float64 {
 	return ret / float64(len(h.Data))
 }
 
-func (h IndexHistory) StdDev() float64 {
+func (h Data) StdDev() float64 {
 	return math.Sqrt(h.Variance())
 }
 
-func (h IndexHistory) Volatility() float64 {
+func (h Data) Volatility() float64 {
 	var (
 		relChange []float64
 		avg       float64
@@ -77,7 +80,7 @@ func (h IndexHistory) Volatility() float64 {
 	return annuallized
 }
 
-func (h IndexHistory) Returns() float64 {
+func (h Data) Returns() float64 {
 	v0 := h.Data[0].Value
 	v1 := h.Data[len(h.Data)-1].Value
 
@@ -87,11 +90,11 @@ func (h IndexHistory) Returns() float64 {
 	return 100 * (chg - 1)
 }
 
-func (h IndexHistory) SharpeRatio() float64 {
+func (h Data) SharpeRatio() float64 {
 	return h.Returns() / h.Volatility()
 }
 
-func (h IndexHistory) Min() float64 {
+func (h Data) Min() float64 {
 	var ret float64
 
 	for _, d := range h.Data {
@@ -103,7 +106,7 @@ func (h IndexHistory) Min() float64 {
 	return ret
 }
 
-func (h IndexHistory) Max() float64 {
+func (h Data) Max() float64 {
 	var ret float64
 
 	for _, d := range h.Data {
@@ -115,7 +118,7 @@ func (h IndexHistory) Max() float64 {
 	return ret
 }
 
-func (h IndexHistory) Last() float64 {
+func (h Data) Last() float64 {
 	if len(h.Data) == 0 {
 		return math.NaN()
 	}
@@ -123,7 +126,8 @@ func (h IndexHistory) Last() float64 {
 	return h.Data[len(h.Data)-1].Value
 }
 
-func loadHistory(r io.Reader) (map[string]IndexHistory, error) {
+// Load loads timeseries data from an io.Reader.
+func Load(r io.Reader) (map[string]Data, error) {
 	data, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return nil, err
@@ -131,7 +135,7 @@ func loadHistory(r io.Reader) (map[string]IndexHistory, error) {
 
 	header := data[0]
 
-	ret := make([]IndexHistory, len(header)-1)
+	ret := make([]Data, len(header)-1)
 	for i := 1; i < len(header); i++ {
 		ret[i-1].Name = header[i]
 	}
@@ -143,19 +147,23 @@ func loadHistory(r io.Reader) (map[string]IndexHistory, error) {
 		}
 
 		for col := 1; col < len(data[row]); col++ {
+			// accept comma as decimal separator, too.
 			v, err := strconv.ParseFloat(strings.Replace(data[row][col], ",", ".", -1), 64)
 			if err != nil {
 				return nil, err
 			}
 
-			ret[col-1].Data = append(ret[col-1].Data, IndexDatum{
+			// TODO: the code is only interested in relative
+			// change; calculate this here to avoid repeated work
+			// and simplify bounds checking.
+			ret[col-1].Data = append(ret[col-1].Data, Datum{
 				Date:  t,
 				Value: v,
 			})
 		}
 	}
 
-	m := make(map[string]IndexHistory)
+	m := make(map[string]Data)
 	for i := 1; i < len(header); i++ {
 		m[header[i]] = ret[i-1]
 	}
@@ -163,10 +171,16 @@ func loadHistory(r io.Reader) (map[string]IndexHistory, error) {
 	return m, nil
 }
 
-func generateHistory(names []string, qp QuoteProvider) (map[string]IndexHistory, error) {
-	histories := map[string]IndexHistory{}
+type QuoteProvider interface {
+	Next() (time.Time, bool)
+	RelativeValue(string) (float64, error)
+}
+
+// Generate uses a QuoteProvider to generate a data set.
+func Generate(names []string, qp QuoteProvider) (map[string]Data, error) {
+	histories := map[string]Data{}
 	for _, name := range names {
-		histories[name] = IndexHistory{
+		histories[name] = Data{
 			Name: name,
 		}
 	}
@@ -185,13 +199,13 @@ func generateHistory(names []string, qp QuoteProvider) (map[string]IndexHistory,
 
 			h := histories[name]
 			if len(h.Data) == 0 {
-				h.Data = []IndexDatum{{
+				h.Data = []Datum{{
 					Date: date.AddDate(0, -1, 0),
 					Value: 100,
 				}}
 			}
 			value := h.Data[len(h.Data)-1].Value * rv
-			h.Data = append(h.Data, IndexDatum{
+			h.Data = append(h.Data, Datum{
 				Date: date,
 				Value: value,
 			})
@@ -202,7 +216,8 @@ func generateHistory(names []string, qp QuoteProvider) (map[string]IndexHistory,
 	return histories, nil
 }
 
-type BySharpeRatio []IndexHistory
+// BySharpeRatio allows to sort a Data slice by their Sharpe Ratio.
+type BySharpeRatio []Data
 
 func (b BySharpeRatio) Len() int {
 	return len(b)

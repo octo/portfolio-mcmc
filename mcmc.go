@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+
+	"github.com/octo/portfolio-mcmc/timeseries"
 )
 
 // expectedDuration is the expected value for the length of sequential months.
@@ -13,7 +15,7 @@ const expectedDuration = 12 // [months]
 // month over a random month.
 // Implements the QuoteProvider interface.
 type MarkovChain struct {
-	Data map[string]IndexHistory
+	Data map[string]timeseries.Data
 
 	index int
 	date  time.Time
@@ -21,7 +23,7 @@ type MarkovChain struct {
 
 // Next advances the time and chooses the next month to return data from.
 func (m *MarkovChain) Next() (time.Time, bool) {
-	var data []IndexDatum
+	var data []timeseries.Datum
 	for _, ih := range m.Data {
 		if len(data) == 0 || len(data) > len(ih.Data) {
 			data = ih.Data
