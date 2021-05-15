@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/octo/portfolio-mcmc/timeseries"
+	"github.com/octo/portfolio-mcmc/portfolio"
 )
 
 func main() {
@@ -37,8 +38,8 @@ func main() {
 	//
 	// Backtest specific portfolio
 	//
-	p := Portfolio{
-		Positions: []Position{
+	p := portfolio.Portfolio{
+		Positions: []portfolio.Position{
 			{"WORLD VALUE", 40000.0},
 			{"USA SMALL CAP VALUE WEIGHTED", 40000.0},
 			{"WORLD QUALITY", 20000.0},
@@ -82,7 +83,7 @@ func main() {
 }
 
 type Individual struct {
-	Portfolio
+	portfolio.Portfolio
 	Returns, Volatility, SharpeRatio float64
 }
 
@@ -118,7 +119,7 @@ func evolve(hist map[string]timeseries.Data) error {
 	pop := &Population{}
 	for i := 0; i < 100; i++ {
 		pop.Individuals = append(pop.Individuals, &Individual{
-			Portfolio: randomPortfolio(names),
+			Portfolio: portfolio.Random(names),
 		})
 	}
 
@@ -154,7 +155,7 @@ func evolve(hist map[string]timeseries.Data) error {
 			parent0 := num + rand.Intn(len(pop.Individuals)-num)
 			parent1 := num + rand.Intn(len(pop.Individuals)-num)
 
-			pop.Individuals[i].Portfolio = Recombine(
+			pop.Individuals[i].Portfolio = portfolio.Recombine(
 				pop.Individuals[parent0].Portfolio, pop.Individuals[parent1].Portfolio)
 		}
 	}

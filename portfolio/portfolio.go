@@ -1,4 +1,5 @@
-package main
+// Package portfolio implements data structures and methods to work with portfolios.
+package portfolio
 
 import (
 	"fmt"
@@ -131,7 +132,8 @@ func Recombine(p0, p1 Portfolio) Portfolio {
 	return ret
 }
 
-func randomPortfolio(names []string) Portfolio {
+// Random generates a random portfolio.
+func Random(names []string) Portfolio {
 	var p Portfolio
 	for _, name := range names {
 		p.Positions = append(p.Positions, Position{
