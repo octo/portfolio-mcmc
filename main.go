@@ -33,39 +33,6 @@ func main() {
 	if err := evolve(hist); err != nil {
 		log.Fatal("evolve: ", err)
 	}
-	return
-
-	//
-	// Forecast specific portfolio using Monte Carlo Markov Chains
-	//
-	p := portfolio.Portfolio{
-		Positions: []portfolio.Position{
-			{"WORLD VALUE", 40000.0},
-			{"USA SMALL CAP VALUE WEIGHTED", 40000.0},
-			{"WORLD QUALITY", 20000.0},
-			{"WORLD MOMENTUM", 0},
-		},
-	}
-
-	fmt.Println("=== Markov Chains ===")
-	var results []timeseries.Data
-	for i := 0; i < 50; i++ {
-		res, err := p.Eval(&MarkovChain{
-			Data: hist,
-		})
-		if err != nil {
-			log.Fatal("Eval: ", err)
-		}
-
-		results = append(results, res)
-	}
-
-	sort.Sort(timeseries.BySharpeRatio(results))
-	for _, res := range results {
-		fmt.Printf("data %q (returns: %.1f%%; volatility: %.1f%%; sharpe ratio: %.2f)\n",
-			res, res.Returns(), res.Volatility(), res.SharpeRatio())
-	}
-
 }
 
 type Individual struct {
