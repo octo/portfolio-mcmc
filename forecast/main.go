@@ -19,26 +19,8 @@ var (
 	pf = portfolio.Portfolio{}
 )
 
-func addPosition(flagValue string) error {
-	fields := strings.Split(flagValue, ":")
-	if len(fields) != 2 {
-		return fmt.Errorf(`got %q, want "<name>:<weight>"`, flagValue)
-	}
-
-	weight, err := strconv.ParseFloat(fields[1], 64)
-	if err != nil {
-		return fmt.Errorf("ParseFloat(%q): %w", fields[1], err)
-	}
-
-	pf.Positions = append(pf.Positions, portfolio.Position{
-		Name:  fields[0],
-		Value: weight,
-	})
-	return nil
-}
-
 func main() {
-	flag.Func("pos", `position as "name:weight"`, addPosition)
+	flag.Func("pos", `position as "name:weight"`, pf.FlagFunc())
 	flag.Parse()
 
 	f, err := os.Open(*input)

@@ -50,7 +50,7 @@ func (p Portfolio) CSV() string {
 		sum += pos.Value
 	}
 	for _, pos := range p.Positions {
-		fields = append(fields, fmt.Sprintf("%.1f", 100 * pos.Value / sum))
+		fields = append(fields, fmt.Sprintf("%.1f", 100*pos.Value/sum))
 	}
 
 	return strings.Join(fields, ",")
@@ -89,6 +89,27 @@ func (p Portfolio) Eval(qp QuoteProvider) (timeseries.Data, error) {
 	}
 
 	return ret, nil
+}
+
+// FlagFunc returns a function that can be passed to flag.Func() for flag parsing.
+func (p *Portfolio) FlagFunc() func(string) error {
+	return func(flagValue string) error {
+		fields := strings.Split(flagValue, ":")
+		if len(fields) != 2 {
+			return fmt.Errorf(`got %q, want "<name>:<weight>"`, flagValue)
+		}
+
+		weight, err := strconv.ParseFloat(fields[1], 64)
+		if err != nil {
+			return fmt.Errorf("ParseFloat(%q): %w", fields[1], err)
+		}
+
+		p.Positions = append(p.Positions, portfolio.Position{
+			Name:  fields[0],
+			Value: weight,
+		})
+		return nil
+	}
 }
 
 // Recombine combines two portfolios, p0 and p1, to create a "child" portfolio.
