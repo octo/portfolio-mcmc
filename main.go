@@ -18,13 +18,13 @@ func main() {
 
 	f, err := os.Open("history.csv")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("os.Open(%q): %v", "history.csv", err)
 	}
 	defer f.Close()
 
 	hist, err := timeseries.Load(f)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("timeseries.Load(): %v", err)
 	}
 
 	//
@@ -36,7 +36,7 @@ func main() {
 	return
 
 	//
-	// Backtest specific portfolio
+	// Forecast specific portfolio using Monte Carlo Markov Chains
 	//
 	p := portfolio.Portfolio{
 		Positions: []portfolio.Position{
@@ -47,20 +47,6 @@ func main() {
 		},
 	}
 
-	res, err := p.Eval(&Backtest{
-		Data: hist,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("=== Backtest ===")
-	fmt.Printf("data %q (returns: %.1f%%; volatility: %.1f%%; sharpe ratio: %.2f)\n",
-		res, res.Returns(), res.Volatility(), res.SharpeRatio())
-
-	//
-	// Forecast specific portfolio using Monte Carlo Markov Chains
-	//
 	fmt.Println("=== Markov Chains ===")
 	var results []timeseries.Data
 	for i := 0; i < 50; i++ {
@@ -132,7 +118,7 @@ func evolve(hist map[string]timeseries.Data) error {
 		}
 
 		for _, ind := range pop.Individuals {
-			h, err := ind.Portfolio.Eval(&Backtest{
+			h, err := ind.Portfolio.Eval(&timeseries.Backtest{
 				Data: genHist,
 			})
 			if err != nil {

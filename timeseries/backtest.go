@@ -1,23 +1,21 @@
-package main
+package timeseries
 
 import (
 	"fmt"
 	"time"
-
-	"github.com/octo/portfolio-mcmc/timeseries"
 )
 
 // Backtest iterates over the provided historical data.
 // Implements the QuoteProvider interface.
 type Backtest struct {
-	Data  map[string]timeseries.Data
+	Data  map[string]Data
 
 	index int
 }
 
 // Next advances the time to the next month.
 func (b *Backtest) Next() (time.Time, bool) {
-	var data []timeseries.Datum
+	var data []Datum
 	for _, ih := range b.Data {
 		if len(data) == 0 || len(data) > len(ih.Data) {
 			data = ih.Data
