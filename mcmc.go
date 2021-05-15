@@ -6,8 +6,12 @@ import (
 	"time"
 )
 
-const expectedDuration = 12 // months
+// expectedDuration is the expected value for the length of sequential months.
+const expectedDuration = 12 // [months]
 
+// MarkovChain implements a bootstrapping method that favor the subsequent
+// month over a random month.
+// Implements the QuoteProvider interface.
 type MarkovChain struct {
 	Data map[string]IndexHistory
 
@@ -15,6 +19,7 @@ type MarkovChain struct {
 	date  time.Time
 }
 
+// Next advances the time and chooses the next month to return data from.
 func (m *MarkovChain) Next() (time.Time, bool) {
 	var data []IndexDatum
 	for _, ih := range m.Data {
@@ -43,13 +48,15 @@ func (m *MarkovChain) Next() (time.Time, bool) {
 	return m.date, true
 }
 
+// RelativeValue returns the relative change for the position name.  Returns
+// 1.0 if there is no change.
 func (m *MarkovChain) RelativeValue(name string) (float64, error) {
 	ih, ok := m.Data[name]
 	if !ok {
 		return 0, fmt.Errorf("no such data: %q", name)
 	}
 
-	if m.index >= len(ih.Data) {
+	if m.index < 1 || m.index >= len(ih.Data) {
 		return 0, fmt.Errorf("index out of bounds: have %d, size %d", m.index, len(ih.Data))
 	}
 
