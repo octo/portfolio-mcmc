@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -9,16 +10,23 @@ import (
 	"strings"
 	"time"
 
-	"github.com/octo/portfolio-mcmc/timeseries"
 	"github.com/octo/portfolio-mcmc/portfolio"
+	"github.com/octo/portfolio-mcmc/timeseries"
+)
+
+var (
+	input          = flag.String("input", "history.csv", "file containing historic returns")
+	populationSize = flag.Int("size", 100, "population size")
+	iterations     = flag.Int("iterations", 2000, "number of iterations")
 )
 
 func main() {
+	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 
-	f, err := os.Open("history.csv")
+	f, err := os.Open(*input)
 	if err != nil {
-		log.Fatalf("os.Open(%q): %v", "history.csv", err)
+		log.Fatalf("os.Open(%q): %v", *input, err)
 	}
 	defer f.Close()
 
@@ -27,9 +35,6 @@ func main() {
 		log.Fatalf("timeseries.Load(): %v", err)
 	}
 
-	//
-	// Optimize asset allocation
-	//
 	if err := evolve(hist); err != nil {
 		log.Fatal("evolve: ", err)
 	}
@@ -41,7 +46,7 @@ type Individual struct {
 }
 
 func (i Individual) String() string {
-	return fmt.Sprintf("%s\n    Returns: %4.1f, Volatility: %4.1f, Sharpe Ratio: %4.2f",
+	return fmt.Sprintf("%s (%4.1f/%4.1f/%4.2f)",
 		i.Portfolio, i.Returns, i.Volatility, i.SharpeRatio)
 }
 
@@ -70,14 +75,14 @@ func evolve(hist map[string]timeseries.Data) error {
 	fmt.Println(strings.Join(names, ","))
 
 	pop := &Population{}
-	for i := 0; i < 100; i++ {
+	for i := 0; i < *populationSize; i++ {
 		pop.Individuals = append(pop.Individuals, &Individual{
 			Portfolio: portfolio.Random(names),
 		})
 	}
 
-	for k := 0; k < 2000; k++ {
-		genHist, err := timeseries.Generate(names, &MarkovChain{
+	for k := 0; k < *iterations; k++ {
+		genHist, err := timeseries.Generate(names, &timeseries.MarkovChain{
 			Data: hist,
 		})
 		if err != nil {
