@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -104,7 +105,7 @@ func (p *Portfolio) FlagFunc() func(string) error {
 			return fmt.Errorf("ParseFloat(%q): %w", fields[1], err)
 		}
 
-		p.Positions = append(p.Positions, portfolio.Position{
+		p.Positions = append(p.Positions, Position{
 			Name:  fields[0],
 			Value: weight,
 		})

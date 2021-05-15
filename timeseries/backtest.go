@@ -8,7 +8,7 @@ import (
 // Backtest iterates over the provided historical data.
 // Implements the QuoteProvider interface.
 type Backtest struct {
-	Data  map[string]Data
+	Data map[string]Data
 
 	index int
 }

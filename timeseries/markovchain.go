@@ -1,9 +1,9 @@
 package timeseries
 
 import (
-	"time"
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 // expectedDuration is the expected value for the length of sequential months.

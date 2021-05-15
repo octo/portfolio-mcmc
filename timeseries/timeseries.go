@@ -200,13 +200,13 @@ func Generate(names []string, qp QuoteProvider) (map[string]Data, error) {
 			h := histories[name]
 			if len(h.Data) == 0 {
 				h.Data = []Datum{{
-					Date: date.AddDate(0, -1, 0),
+					Date:  date.AddDate(0, -1, 0),
 					Value: 100,
 				}}
 			}
 			value := h.Data[len(h.Data)-1].Value * rv
 			h.Data = append(h.Data, Datum{
-				Date: date,
+				Date:  date,
 				Value: value,
 			})
 			histories[name] = h
