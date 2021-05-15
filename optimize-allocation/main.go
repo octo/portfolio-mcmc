@@ -18,6 +18,7 @@ var (
 	input          = flag.String("input", "history.csv", "file containing historic returns")
 	populationSize = flag.Int("size", 100, "population size")
 	iterations     = flag.Int("iterations", 2000, "number of iterations")
+	positions      = flagStringList("pos", "positions to consider")
 )
 
 func main() {
@@ -33,6 +34,25 @@ func main() {
 	hist, err := timeseries.Load(f)
 	if err != nil {
 		log.Fatalf("timeseries.Load(): %v", err)
+	}
+
+	if len(*positions) != 0 {
+		keep := map[string]bool{}
+		for _, k := range *positions {
+			keep[k] = true
+		}
+
+		for k := range hist {
+			if !keep[k] {
+				keep[k] = false
+			}
+		}
+
+		for k, v := range keep {
+			if !v {
+				delete(hist, k)
+			}
+		}
 	}
 
 	if err := evolve(hist); err != nil {
@@ -119,4 +139,15 @@ func evolve(hist map[string]timeseries.Data) error {
 	}
 
 	return nil
+}
+
+func flagStringList(name, usage string) *[]string {
+	var ret []string
+
+	flag.Func(name, usage, func(flagVal string) error {
+		ret = append(ret, flagVal)
+		return nil
+	})
+
+	return &ret
 }
