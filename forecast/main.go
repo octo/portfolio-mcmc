@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"sort"
+	"time"
 
 	"github.com/octo/portfolio-mcmc/portfolio"
 	"github.com/octo/portfolio-mcmc/timeseries"
@@ -20,6 +22,7 @@ var (
 func main() {
 	flag.Func("pos", `position as "name:weight"`, pf.FlagFunc())
 	flag.Parse()
+	rand.Seed(time.Now().UnixNano())
 
 	f, err := os.Open(*input)
 	if err != nil {
