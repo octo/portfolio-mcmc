@@ -6,8 +6,6 @@ import (
 	"log"
 	"os"
 	"sort"
-	"strconv"
-	"strings"
 
 	"github.com/octo/portfolio-mcmc/portfolio"
 	"github.com/octo/portfolio-mcmc/timeseries"
