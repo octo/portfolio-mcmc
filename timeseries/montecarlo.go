@@ -9,10 +9,10 @@ import (
 // expectedDuration is the expected value for the length of sequential months.
 const expectedDuration = 12 // [months]
 
-// MarkovChain implements a bootstrapping method that favor the subsequent
+// MonteCarlo implements a bootstrapping method that favors the subsequent
 // month over a random month.
 // Implements the QuoteProvider interface.
-type MarkovChain struct {
+type MonteCarlo struct {
 	Data map[string]Data
 
 	index int
@@ -20,7 +20,7 @@ type MarkovChain struct {
 }
 
 // Next advances the time and chooses the next month to return data from.
-func (m *MarkovChain) Next() (time.Time, bool) {
+func (m *MonteCarlo) Next() (time.Time, bool) {
 	var data []Datum
 	for _, ih := range m.Data {
 		if len(data) == 0 || len(data) > len(ih.Data) {
@@ -50,7 +50,7 @@ func (m *MarkovChain) Next() (time.Time, bool) {
 
 // RelativeValue returns the relative change for the position name.  Returns
 // 1.0 if there is no change.
-func (m *MarkovChain) RelativeValue(name string) (float64, error) {
+func (m *MonteCarlo) RelativeValue(name string) (float64, error) {
 	ih, ok := m.Data[name]
 	if !ok {
 		return 0, fmt.Errorf("no such data: %q", name)

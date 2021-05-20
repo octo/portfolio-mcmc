@@ -102,7 +102,7 @@ func evolve(hist map[string]timeseries.Data) error {
 	}
 
 	for k := 0; k < *iterations; k++ {
-		genHist, err := timeseries.Generate(names, &timeseries.MarkovChain{
+		genHist, err := timeseries.Generate(names, &timeseries.MonteCarlo{
 			Data: hist,
 		})
 		if err != nil {

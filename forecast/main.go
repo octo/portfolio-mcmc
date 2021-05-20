@@ -54,7 +54,7 @@ func main() {
 	fmt.Println(pf)
 	var results []timeseries.Data
 	for i := 0; i < 50; i++ {
-		res, err := pf.Eval(&timeseries.MarkovChain{
+		res, err := pf.Eval(&timeseries.MonteCarlo{
 			Data: hist,
 		})
 		if err != nil {
