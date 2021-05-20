@@ -37,10 +37,19 @@ func (p Portfolio) String() string {
 		if i != 0 {
 			fmt.Fprint(&b, ", ")
 		}
-		fmt.Fprintf(&b, "%.0f%% %s", 100*pos.Value/sum, pos.Name)
+		fmt.Fprintf(&b, "%2.0f%% %s", 100*pos.Value/sum, pos.Name)
 	}
 
 	return b.String()
+}
+
+func (p Portfolio) Position(name string) float64 {
+	for _, pos := range p.Positions {
+		if pos.Name == name {
+			return pos.Value
+		}
+	}
+	return 0
 }
 
 func (p Portfolio) CSV() string {
@@ -114,41 +123,46 @@ func (p *Portfolio) FlagFunc() func(string) error {
 }
 
 // Recombine combines two portfolios, p0 and p1, to create a "child" portfolio.
-// Recombination is done by calculating the average for each position. Mutation
-// is done by multiplying each position with a random number between 95% and
-// 105%.
+// Recombination is done by iterating over the positions, randomly picking the
+// weight of one of the parents. Mutation is done by multiplying each position
+// with a random number between 95% and 105%.
 func Recombine(p0, p1 Portfolio) Portfolio {
-	positions := map[string]float64{}
-
+	nameMap := map[string]bool{}
 	for _, p := range p0.Positions {
-		positions[p.Name] += p.Value
+		nameMap[p.Name] = true
 	}
 	for _, p := range p1.Positions {
-		positions[p.Name] += p.Value
-	}
-
-	// mutate
-	for name, value := range positions {
-		positions[name] = (0.95 * value) + (0.1 * rand.Float64() * value)
-	}
-
-	// renormalize
-	var sum float64
-	for _, value := range positions {
-		sum += value
+		nameMap[p.Name] = true
 	}
 	var names []string
-	for name, value := range positions {
+	for name := range nameMap {
 		names = append(names, name)
-		positions[name] = 100000 * value / sum
 	}
 	sort.Strings(names)
+
+	var (
+		positions = map[string]float64{}
+		sum       float64
+	)
+	for _, name := range names {
+		if rand.Float64() < .5 {
+			positions[name] = p0.Position(name)
+		} else {
+			positions[name] = p1.Position(name)
+		}
+
+		// mutate
+		value := positions[name]
+		positions[name] = value * (0.95 + 0.1*rand.Float64())
+
+		sum += positions[name]
+	}
 
 	var ret Portfolio
 	for _, name := range names {
 		ret.Positions = append(ret.Positions, Position{
 			Name:  name,
-			Value: positions[name],
+			Value: 100000 * positions[name] / sum,
 		})
 	}
 	return ret
