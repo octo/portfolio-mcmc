@@ -13,6 +13,8 @@ import (
 	"github.com/octo/portfolio-mcmc/timeseries"
 )
 
+const iterations = 10000
+
 var (
 	input = flag.String("input", "history.csv", "file containing historic returns")
 
@@ -53,10 +55,10 @@ func main() {
 		return
 	}
 
-	fmt.Println("=== Markov Chains ===")
+	fmt.Println("=== Monte Carlo ===")
 	fmt.Println(pf)
 	var results []timeseries.Data
-	for i := 0; i < 50; i++ {
+	for i := 0; i < iterations; i++ {
 		res, err := pf.Eval(&timeseries.MonteCarlo{
 			Data: hist,
 		})
@@ -68,8 +70,47 @@ func main() {
 	}
 
 	sort.Sort(timeseries.BySharpeRatio(results))
-	for _, res := range results {
-		fmt.Printf("data %q (returns: %.1f%%; volatility: %.1f%%; sharpe ratio: %.2f)\n",
-			res, res.Returns(), res.Volatility(), res.SharpeRatio())
+
+	printResult(50, results)
+	printResult(80, results)
+	printResult(90, results)
+	printResult(95, results)
+	printResult(99, results)
+
+	fmt.Println("=== Markov Chain ===")
+
+	data, err := pf.Eval(&timeseries.Backtest{
+		Data: hist,
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	results = nil
+	for i := 0; i < iterations; i++ {
+		res, err := pf.Eval(timeseries.NewMarkovChain(data))
+		if err != nil {
+			log.Fatal("Eval: ", err)
+		}
+
+		results = append(results, res)
+	}
+
+	sort.Sort(timeseries.BySharpeRatio(results))
+
+	printResult(50, results)
+	printResult(80, results)
+	printResult(90, results)
+	printResult(95, results)
+	printResult(99, results)
+}
+
+func printResult(p int, results []timeseries.Data) {
+	idx := len(results) * (100 - p) / 100
+
+	fmt.Printf("[P%d] returns: %.1f%%; volatility: %.1f%%; sharpe ratio: %.2f\n",
+		p,
+		results[idx].Returns(),
+		results[idx].Volatility(),
+		results[idx].SharpeRatio())
 }
