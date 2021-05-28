@@ -53,8 +53,8 @@ func (h Data) stdDev() float64 {
 }
 
 func (h Data) Volatility() float64 {
-	annuallized := h.stdDev() * math.Sqrt(12)
-	return 100 * annuallized
+	annualized := h.stdDev() * math.Sqrt(12)
+	return 100 * annualized
 }
 
 func (h Data) Returns() float64 {
