@@ -83,39 +83,39 @@ func TestReturns(t *testing.T) {
 
 func TestVolatility(t *testing.T) {
 	cases := []struct {
-		name   string
-		values []float64
-		wantAvg   float64
-		wantVar   float64
-		wantVola   float64
+		name     string
+		values   []float64
+		wantAvg  float64
+		wantVar  float64
+		wantVola float64
 	}{
 		{
-			name:   "zero",
-			values: []float64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			wantAvg: 0,
-			wantVar: 0,
-			wantVola:   0,
+			name:     "zero",
+			values:   []float64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			wantAvg:  0,
+			wantVar:  0,
+			wantVola: 0,
 		},
 		{
-			name:   "no variance",
-			values: []float64{.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05},
-			wantAvg: 0.05,
-			wantVar: 0,
-			wantVola:   0,
+			name:     "no variance",
+			values:   []float64{.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05},
+			wantAvg:  0.05,
+			wantVar:  0,
+			wantVola: 0,
 		},
 		{
-			name:   "alternate",
-			values: []float64{.05, -.05, .05, -.05, .05, -.05, .05, -.05, .05, -.05, .05, -.05},
-			wantAvg: 0,
-			wantVar: .0025, // = 12 * 0.05^2 / 12 = 0.05^2
-			wantVola:   100.0 * 0.05 * math.Sqrt(12),
+			name:     "alternate",
+			values:   []float64{.05, -.05, .05, -.05, .05, -.05, .05, -.05, .05, -.05, .05, -.05},
+			wantAvg:  0,
+			wantVar:  .0025, // = 12 * 0.05^2 / 12 = 0.05^2
+			wantVola: 100.0 * 0.05 * math.Sqrt(12),
 		},
 		{
-			name:   "annualized",
-			values: []float64{.01, .02, .03, .04, .05},
-			wantAvg: .03,
-			wantVar: 0.0002, // = (2*0.02^2 + 2*0.01^2) / 5
-			wantVola:   100.0 * math.Sqrt(.0002) * math.Sqrt(12),
+			name:     "annualized",
+			values:   []float64{.01, .02, .03, .04, .05},
+			wantAvg:  .03,
+			wantVar:  0.0002, // = (2*0.02^2 + 2*0.01^2) / 5
+			wantVola: 100.0 * math.Sqrt(.0002) * math.Sqrt(12),
 		},
 	}
 
