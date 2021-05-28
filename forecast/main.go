@@ -55,8 +55,10 @@ func main() {
 		return
 	}
 
-	fmt.Println("=== Monte Carlo ===")
 	fmt.Println(pf)
+
+	fmt.Println()
+	fmt.Println("=== Monte Carlo ===")
 	var results []timeseries.Data
 	for i := 0; i < iterations; i++ {
 		res, err := pf.Eval(&timeseries.MonteCarlo{
@@ -77,6 +79,7 @@ func main() {
 	printResult(95, results)
 	printResult(99, results)
 
+	fmt.Println()
 	fmt.Println("=== Markov Chain ===")
 
 	data, err := pf.Eval(&timeseries.Backtest{

@@ -74,13 +74,18 @@ func (p Portfolio) Eval(qp QuoteProvider) (timeseries.Data, error) {
 		Name: "Simulated Portfolio",
 	}
 
+	var prevValue float64
+	for _, p := range positions {
+		prevValue += p.Value
+	}
+
 	for {
 		date, ok := qp.Next()
 		if !ok {
 			break
 		}
 
-		var sum float64
+		var nextValue float64
 		for i := 0; i < len(positions); i++ {
 			rv, err := qp.RelativeValue(positions[i].Name)
 			if err != nil {
@@ -88,14 +93,14 @@ func (p Portfolio) Eval(qp QuoteProvider) (timeseries.Data, error) {
 			}
 
 			positions[i].Value *= rv
-			sum += positions[i].Value
-			// fmt.Printf("[%v] %q %.0f (%5.1f%%)\n", date, positions[i].Name, positions[i].Value, 100*(rv-1))
+			nextValue += positions[i].Value
 		}
 
 		ret.Data = append(ret.Data, timeseries.Datum{
 			Date:  date,
-			Value: sum,
+			Value: nextValue/prevValue - 1,
 		})
+		prevValue = nextValue
 	}
 
 	return ret, nil

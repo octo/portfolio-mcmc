@@ -28,16 +28,37 @@ func NewMarkovChain(data Data) *MarkovChain {
 		date: time.Date(year, month, 1, 0, 0, 0, 0, time.Local),
 	}
 
-	months := len(data.Data)
-	for i := 1; i < months-1; i++ {
-		v0 := data.Data[i-1].Value
-		v1 := data.Data[i].Value
-		v2 := data.Data[i+1].Value
-
-		prevReturns := calcReturnsPermille(v0, v1)
-		nextReturns := calcReturnsPermille(v1, v2)
+	for i := 0; i < len(data.Data)-1; i++ {
+		prevReturns := permille(data.Data[i].Value)
+		nextReturns := permille(data.Data[i+1].Value)
 
 		mc.data[prevReturns] = mc.data[prevReturns].add(nextReturns)
+	}
+
+	// the graph in mc.data may not be strongly connected, if the last
+	// month's returns never occurred before. Remove terminal states until
+	// the graph becomes strongly connected.
+outer:
+	for len(mc.data) > 0 {
+		for k, ee := range mc.data {
+			for _, e := range ee {
+				if _, ok := mc.data[e.returnsPermille]; ok {
+					continue
+				}
+				// e is a terminal state; remove it.
+
+				ee = ee.remove(e.returnsPermille)
+				if len(ee) == 0 {
+					// k is now a terminal state; start over
+					delete(mc.data, k)
+					continue outer
+				} else {
+					mc.data[k] = ee
+				}
+			}
+		}
+
+		break
 	}
 
 	for _, e := range mc.data {
@@ -53,11 +74,15 @@ func NewMarkovChain(data Data) *MarkovChain {
 	/*
 		sort.Ints(keys)
 		for _, k := range keys {
-			fmt.Println(k, "->", mc.data[k])
+			fmt.Printf("%.1f%% -> %v\n", float64(k)/10, mc.data[k])
 		}
 	*/
 
 	return mc
+}
+
+func permille(v float64) int {
+	return int(math.Round(v * 1000))
 }
 
 func calcReturnsPermille(t0, t1 float64) int {
@@ -130,8 +155,19 @@ func (e edges) next() int {
 		}
 		r -= ee.weight
 	}
-	log.Fatal("this should be unreachable. r = %g, e = %#v", r, e)
+	log.Fatalf("this should be unreachable. r = %g, e = %#v", r, e)
 	return 0
+}
+
+func (e edges) remove(returnsPermille int) edges {
+	var ret edges
+	for _, ee := range e {
+		if ee.returnsPermille != returnsPermille {
+			ret = append(ret, ee)
+		}
+	}
+
+	return ret
 }
 
 func (e edges) String() string {

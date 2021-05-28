@@ -30,6 +30,8 @@ func (m *MonteCarlo) Next() (time.Time, bool) {
 	}
 
 	if m.date.IsZero() {
+		m.index = rand.Intn(len(data))
+
 		year, month, _ := time.Now().Date()
 		m.date = time.Date(year, month, 1, 0, 0, 0, 0, time.Local)
 	}
@@ -56,9 +58,9 @@ func (m *MonteCarlo) RelativeValue(name string) (float64, error) {
 		return 0, fmt.Errorf("no such data: %q", name)
 	}
 
-	if m.index < 1 || m.index >= len(ih.Data) {
+	if m.index >= len(ih.Data) {
 		return 0, fmt.Errorf("index out of bounds: have %d, size %d", m.index, len(ih.Data))
 	}
 
-	return ih.Data[m.index].Value / ih.Data[m.index-1].Value, nil
+	return 1 + ih.Data[m.index].Value, nil
 }

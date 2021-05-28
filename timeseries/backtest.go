@@ -10,6 +10,7 @@ import (
 type Backtest struct {
 	Data map[string]Data
 
+	init  bool
 	index int
 }
 
@@ -22,10 +23,14 @@ func (b *Backtest) Next() (time.Time, bool) {
 		}
 	}
 
-	if b.index >= len(data)-1 {
-		return time.Time{}, false
+	if b.init {
+		b.index++
+		if b.index >= len(data) {
+			return time.Time{}, false
+		}
+	} else {
+		b.init = true
 	}
-	b.index++
 
 	return data[b.index].Date, true
 }
@@ -38,9 +43,9 @@ func (b *Backtest) RelativeValue(name string) (float64, error) {
 		return 0, fmt.Errorf("no such data: %q", name)
 	}
 
-	if b.index < 1 || b.index >= len(ih.Data) {
+	if b.index >= len(ih.Data) {
 		return 0, fmt.Errorf("Index out of bounds: have %d, size %d", b.index, len(ih.Data))
 	}
 
-	return ih.Data[b.index].Value / ih.Data[b.index-1].Value, nil
+	return 1 + ih.Data[b.index].Value, nil
 }

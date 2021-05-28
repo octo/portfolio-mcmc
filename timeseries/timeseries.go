@@ -26,7 +26,7 @@ func (h Data) String() string {
 	return h.Name
 }
 
-func (h Data) Average() float64 {
+func (h Data) average() float64 {
 	var ret float64
 
 	for _, d := range h.Data {
@@ -36,9 +36,9 @@ func (h Data) Average() float64 {
 	return ret / float64(len(h.Data))
 }
 
-func (h Data) Variance() float64 {
+func (h Data) variance() float64 {
 	var ret float64
-	avg := h.Average()
+	avg := h.average()
 
 	for _, d := range h.Data {
 		dev := d.Value - avg
@@ -48,46 +48,26 @@ func (h Data) Variance() float64 {
 	return ret / float64(len(h.Data))
 }
 
-func (h Data) StdDev() float64 {
-	return math.Sqrt(h.Variance())
+func (h Data) stdDev() float64 {
+	return math.Sqrt(h.variance())
 }
 
 func (h Data) Volatility() float64 {
-	var (
-		relChange []float64
-		avg       float64
-	)
-	for i := 1; i < len(h.Data); i++ {
-		v0 := h.Data[i-1].Value
-		v1 := h.Data[i].Value
-
-		d := 100 * (v1 - v0) / v0
-		relChange = append(relChange, d)
-		avg += d
-	}
-	avg = avg / float64(len(h.Data)-1)
-
-	var variance float64
-	for _, v := range relChange {
-		diff := v - avg
-		variance += diff * diff
-	}
-	variance = variance / float64(len(relChange))
-
-	stdDev := math.Sqrt(variance)
-
-	annuallized := stdDev * math.Sqrt(12)
-	return annuallized
+	annuallized := h.stdDev() * math.Sqrt(12)
+	return 100 * annuallized
 }
 
 func (h Data) Returns() float64 {
-	v0 := h.Data[0].Value
-	v1 := h.Data[len(h.Data)-1].Value
+	var compounded float64 = 1.0
+
+	for _, d := range h.Data {
+		compounded *= 1.0 + d.Value
+	}
 
 	years := float64(len(h.Data)) / 12
 
-	chg := math.Pow(v1/v0, 1/years)
-	return 100 * (chg - 1)
+	annualized := math.Pow(compounded, 1/years)
+	return 100 * (annualized - 1)
 }
 
 func (h Data) SharpeRatio() float64 {
@@ -153,12 +133,9 @@ func Load(r io.Reader) (map[string]Data, error) {
 				return nil, err
 			}
 
-			// TODO: the code is only interested in relative
-			// change; calculate this here to avoid repeated work
-			// and simplify bounds checking.
 			ret[col-1].Data = append(ret[col-1].Data, Datum{
 				Date:  t,
-				Value: v,
+				Value: v / 100,
 			})
 		}
 	}
@@ -198,16 +175,9 @@ func Generate(names []string, qp QuoteProvider) (map[string]Data, error) {
 			}
 
 			h := histories[name]
-			if len(h.Data) == 0 {
-				h.Data = []Datum{{
-					Date:  date.AddDate(0, -1, 0),
-					Value: 100,
-				}}
-			}
-			value := h.Data[len(h.Data)-1].Value * rv
 			h.Data = append(h.Data, Datum{
 				Date:  date,
-				Value: value,
+				Value: rv - 1.0,
 			})
 			histories[name] = h
 		}
